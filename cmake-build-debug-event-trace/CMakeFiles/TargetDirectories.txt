@@ -1,0 +1,3 @@
+D:/WorkingFolderAgProgramming/simplePGA/cmake-build-debug-event-trace/CMakeFiles/simplePGA.dir
+D:/WorkingFolderAgProgramming/simplePGA/cmake-build-debug-event-trace/CMakeFiles/edit_cache.dir
+D:/WorkingFolderAgProgramming/simplePGA/cmake-build-debug-event-trace/CMakeFiles/rebuild_cache.dir
