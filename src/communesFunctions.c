@@ -41,6 +41,58 @@ extern float MBF, ART, AES, SDBF, BF[40];
 
 extern edge *edgeVector,*fixedEdgeVector,cohabitationConstraintes[100],nonCohabitationConstraintes[100];
 ///***********************************************
+extern char cheminBestSolutionBE[150],  cheminOptimalSolutionBE[150],
+cheminBestSolutionDVTC[150],  cheminOptimalSolutionDVTC[150],
+cheminBestSolutionPMP[150],  cheminOptimalSolutionPMP[150],
+cheminBestSolutionPGA[150],  cheminOptimalSolutionPGA[150];
+
+extern FILE *bestSolutionsOverIterationBE, *optimalSolutionFileBE,
+*bestSolutionsOverIterationDVTC, *optimalSolutionFileDVTC,
+*bestSolutionsOverIterationPMP, *optimalSolutionFilePMP,
+*bestSolutionsOverIterationPGA, *optimalSolutionFilePGA;
+///***********************************************
+extern partitionBE *populationBE1,*populationBE2, *solutionDominanteBE,*bestSolutionOverRunsBE;
+extern partitionDVTC *populationDVTC1, *populationDVTC2, *solutionDominanteDVTC, *bestSolutionOverRunsDVTC;
+extern partitionFC *populationFC1, *populationFC2, *solutionDominanteFC, *bestSolutionOverRunsFC;
+extern partitionSVTC *populationSVTC1, *populationSVTC2, *solutionDominanteSVTC, *bestSolutionOverRunsSVTC;
+extern partitionVAE *populationVAE1, *populationVAE2, *solutionDominanteVAE, *bestSolutionOverRunsVAE;
+extern partitionPMP *populationPMP1, *populationPMP2, *solutionDominantePMP, *bestSolutionOverRunsPMP;
+
+///FCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCT
+/// Memory allocation for populations
+///FCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCT
+void memoryAllocationForPopulations() {
+    ///BE :
+    populationBE1 = (partitionBE*)malloc(taillePopulation*sizeof (partitionBE));
+    if(populationBE1==NULL) printf("memory allocation failed for the populationBE1 \n");
+
+    populationBE2 = (partitionBE*)malloc(taillePopulation*sizeof(partitionBE));
+    if(populationBE2==NULL) printf("memory allocation failed for the populationBE2 \n");
+
+    solutionDominanteBE = (partitionBE*)malloc(sizeof(partitionBE));
+    if(solutionDominanteBE==NULL) printf("memory allocation failed for the solutionDominanteBE \n");
+
+    ///DVTC :
+    populationDVTC1 = (partitionDVTC*)malloc(taillePopulation*sizeof (partitionDVTC));
+    if(populationDVTC1==NULL) printf("memory allocation failed for the populationDVTC1 \n");
+
+    populationDVTC2 = (partitionDVTC*)malloc(taillePopulation*sizeof(partitionDVTC));
+    if(populationDVTC2==NULL) printf("memory allocation failed for the populationDVTC2 \n");
+
+    solutionDominanteDVTC = (partitionDVTC*)malloc(sizeof(partitionDVTC));
+    if(solutionDominanteDVTC==NULL) printf("memory allocation failed for the solutionDominanteDVTC \n");
+
+    ///PMP :
+    populationPMP1 = (partitionPMP*)malloc(taillePopulation*sizeof (partitionPMP));
+    if(populationPMP1==NULL) printf("memory allocation failed for the populationPMP1 \n");
+
+    populationPMP2 = (partitionPMP*)malloc(taillePopulation*sizeof(partitionPMP));
+    if(populationPMP2==NULL) printf("memory allocation failed for the populationPMP2 \n");
+
+    solutionDominantePMP = (partitionPMP*)malloc(sizeof(partitionPMP));
+    if(solutionDominantePMP==NULL) printf("memory allocation failed for the solutionDominantePMP \n");
+
+}
 
 
 ///FCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCT
@@ -199,6 +251,95 @@ void getCohabitationCouples(int maxWeight){
     }
 }
 
+///FCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCT
+/// Create files headers
+///FCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCT
+void createFilesHeader(){
+    //###################  BEST SOLUTION PER ITERATION #################
+    fprintf(bestSolutionsOverIterationBE,"Run num,Iteration num,Dominante Solution ID,Intra Cut Size,"
+            "Inter Cut Size,Normalised Cut Size,Fitness,Nbr Violated Constraints,Numbre of clusters,Genotype,Phenotype \n");
+
+    ///###################  OPTIMAL SOLUTION PER RUN ####################
+    fprintf(optimalSolutionFileBE,"nbrRun,intra cut size,inter cut size,total flow,run time,ES,nbr vertices,nbr edges,nbr violated constraints,nbr-Clusters,M-S-C,Coh Con, Non Coh Con,Partition\n");
+
+    //###################  BEST SOLUTION PER ITERATION #################
+    fprintf(bestSolutionsOverIterationDVTC,"Run num,Iteration num,Dominante Solution ID,Intra Cut Size,"
+            "Inter Cut Size,Normalised Cut Size,Fitness,Nbr Violated Constraints,Numbre of clusters,Genotype,Phenotype \n");
+
+    ///###################  OPTIMAL SOLUTION PER RUN ####################
+    fprintf(optimalSolutionFileDVTC,    "nbrRun,intra cut size,inter cut size,total flow,run time,ES,nbr vertices,nbr edges,nbr violated constraints,nbr-Clusters,M-S-C,Coh Con, Non Coh Con,Partition\n");
+
+    //###################  BEST SOLUTION PER ITERATION #################
+    fprintf(bestSolutionsOverIterationPMP,"Run num,Iteration num,Dominante Solution ID,Intra Cut Size,"
+            "Inter Cut Size,Normalised Cut Size,Fitness,Nbr Violated Constraints,Numbre of clusters,Genotype,Phenotype \n");
+
+    ///###################  OPTIMAL SOLUTION PER RUN ####################
+    fprintf(optimalSolutionFilePMP,    "nbrRun,intra cut size,inter cut size,total flow,run time,ES,nbr vertices,nbr edges,nbr violated constraints,nbr-Clusters,M-S-C,Coh Con, Non Coh Con,Partition\n");
+
+    ///###################  OPTIMAL SOLUTION PER RUN ####################
+    fprintf(optimalSolutionFilePGA,"nbrRun,intra cut size,inter cut size,total flow,run time,ES,nbr vertices,nbr edges,nbr violated constraints,nbr-Clusters,M-S-C,Coh Con, Non Coh Con,Partition\n");
+}
 
 
+void openFilesForOptimalAndBestSolutions(int numeroGraphe) {
+    sprintf(cheminBestSolutionBE,"../data/results/BE/bestSolutions/bestSolutionBE%d.csv",numeroGraphe);
+    sprintf(cheminOptimalSolutionBE,"../data/results/BE/OptimalSolution/OptimalSolutionBE%d.csv",numeroGraphe);
+    bestSolutionsOverIterationBE=fopen(cheminBestSolutionBE,"w");
+    optimalSolutionFileBE=fopen(cheminOptimalSolutionBE,"w");
+    if(bestSolutionsOverIterationBE == NULL)
+    {
+        printf("An error occurred: This is a custom error message\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if(optimalSolutionFileBE== NULL)
+    {
+        perror("Impossible d'ouvrir le fichier OptimalSolutionBE en ecriture\n");
+            exit(EXIT_FAILURE);
+    }
+    sprintf(cheminBestSolutionDVTC,"../data/results/DVTC/bestSolutions/bestSolutionDVTC%d.csv",numeroGraphe);
+    sprintf(cheminOptimalSolutionDVTC,"../data/results/DVTC/OptimalSolution/OptimalSolutionDVTC%d.csv",numeroGraphe);
+    bestSolutionsOverIterationDVTC=fopen(cheminBestSolutionDVTC,"w");
+    optimalSolutionFileDVTC=fopen(cheminOptimalSolutionDVTC,"w");
+    if(bestSolutionsOverIterationDVTC == NULL)
+    {
+        printf("An error occurred: This is a custom error message\n");
+        exit(EXIT_FAILURE);
+    }
+
+        if(optimalSolutionFileDVTC== NULL)
+        {
+            perror("Impossible d'ouvrir le fichier OptimalSolutionBE en ecriture\n");
+            exit(EXIT_FAILURE);
+        }
+
+        sprintf(cheminBestSolutionPMP,"../data/results/PMP/bestSolutions/bestSolutionPMP%d.csv",numeroGraphe);
+        sprintf(cheminOptimalSolutionPMP,"../data/results/PMP/OptimalSolution/OptimalSolutionPMP%d.csv",numeroGraphe);
+        bestSolutionsOverIterationPMP=fopen(cheminBestSolutionPMP,"w");
+        optimalSolutionFilePMP=fopen(cheminOptimalSolutionPMP,"w");
+        if(bestSolutionsOverIterationPMP == NULL)
+        {
+            printf("An error occurred when opening PMP file: This is a custom error message\n");
+            exit(EXIT_FAILURE);
+        }
+
+        if(optimalSolutionFilePMP== NULL)
+        {
+            perror("Impossible d'ouvrir le fichier OptimalSolutionPMP en ecriture\n");
+            exit(EXIT_FAILURE);
+        }
+    /// IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+    /// When dealing with pGA, we dont need to store best solutions overIteration
+    /// Instead, for each run we compare optimal solutions and the best one is
+    /// assigned to the pGA
+    /// IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+        sprintf(cheminOptimalSolutionPGA,"../data/results/pGA/OptimalSolutionPGA%d.csv",numeroGraphe);
+        optimalSolutionFilePGA=fopen(cheminOptimalSolutionPGA,"w");
+        if(optimalSolutionFilePGA== NULL)
+        {
+            perror("Impossible d'ouvrir le fichier OptimalSolutionPGA en ecriture\n");
+            exit(EXIT_FAILURE);
+        }
+
+}
 

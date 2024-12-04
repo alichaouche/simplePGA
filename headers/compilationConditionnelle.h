@@ -25,7 +25,4 @@
 
 #define cancel_reallocation 1
 
-#define BE 1
-
-
 #endif //SIMPLEPGA_COMPILATIONCONDITIONNELLE_H

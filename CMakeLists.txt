@@ -8,6 +8,9 @@ set (SOURCES_FILES main.c
         src/genetic_alg_BE.c
         src/Graph.c
         src/communesFunctions.c
-        src/genetic_alg_DVTC.c)
+        src/genetic_alg_DVTC.c
+        src/genetic_alg_PMP.c
+        headers/migration.h
+        src/migration.c)
 add_executable(simplePGA ${SOURCES_FILES})
 

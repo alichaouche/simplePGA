@@ -9,12 +9,14 @@ extern int  nbrNoeuds,
         nbrArretes,
         fixedNbrArretes,
         fluxMatrix[tailleMax][tailleMax],
+        neighborMatrix[tailleMax][tailleMax],
         buckUpFluxMatrix[tailleMax][tailleMax],
         *fluxVector,
         nbrCohabitationConstraintes,
         nbrNonCohabitationConstraintes;
 
 extern edge *edgeVector,*fixedEdgeVector,cohabitationConstraintes[100],nonCohabitationConstraintes[100];
+extern neighbors *neighborsVector;
 ///***********************************************
 
 ///FCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCT
@@ -363,7 +365,7 @@ void readFlowMatrixAndNbrNoeudsFromFlowMatrixFile(FILE *inputFile){
     fscanf(inputFile,"%d",&nbrNoeuds);
     for( i=0; i<nbrNoeuds; i++)
     {
-        for( j=0; j<nbrNoeuds; j++)
+        for( j=0; j < nbrNoeuds; j++)
         {
             fscanf(inputFile,"%d",&fluxMatrix[i][j]);
             /// cette partie est utile pour connecter le graphe
@@ -372,7 +374,6 @@ void readFlowMatrixAndNbrNoeudsFromFlowMatrixFile(FILE *inputFile){
         }
     }
 }
-
 
 ///FCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCT
 /// Read flow matrix and nbrNoueds from edgeList file
@@ -469,5 +470,53 @@ int isFlowMatrixSymetric(){
 void displayEdgeVector(){
     for(int i=0; i< fixedNbrArretes; i++){
         printf("edge n= %d = (%d,%d)\t",i,(edgeVector+i)->nouedDepart, (edgeVector+i)->nouedArrive);
+    }
+}
+
+
+///FUNCTIONFUNCTIONFUNCTIONFUNCTIONFUNCTIONFUNCTION
+/// CALCULATE NEIBHORS VECTORS
+///FUNCTIONFUNCTIONFUNCTIONFUNCTIONFUNCTIONFUNCTION
+
+void calculateNeighborsVector(){
+    for(int i=0; i<nbrNoeuds; i++){
+        neighborsVector[i].vertex = i;
+        neighborsVector[i].nbrNeighbors = 0;
+        neighborsVector[i].sumWeightsIncidentEdges = 0;
+        for(int j = 0; j < nbrNoeuds; j++){
+            if(i!=j && fluxMatrix[i][j] >= 0){
+                neighborsVector[i].listOfNeighbors[neighborsVector[i].nbrNeighbors] = j;
+                neighborsVector[i].nbrNeighbors++;
+                neighborsVector[i].sumWeightsIncidentEdges +=  fluxMatrix[i][j];
+            }
+        }
+    }
+}
+
+
+///FUNCTIONFUNCTIONFUNCTIONFUNCTIONFUNCTIONFUNCTION
+/// CALCULATE NEIBHORHOOD MATRIX
+///FUNCTIONFUNCTIONFUNCTIONFUNCTIONFUNCTIONFUNCTION
+void calculateNeighborhoodMatrix() {
+    for (int i = 0; i < nbrNoeuds; i++) {
+        int nbrNeighbors = 0;
+        for (int j = 0; j < nbrNoeuds; ++j) {
+            if(i!=j && fluxMatrix[i][j] > 0) {
+                nbrNeighbors++;
+                neighborMatrix[i][nbrNeighbors] = j;
+            }
+        }
+        neighborMatrix[i][0] = nbrNeighbors;
+    }
+    //displayNeighborhoodMatrix();
+}
+
+void displayNeighborhoodMatrix() {
+    for (int i = 0; i < nbrNoeuds; i++) {
+        printf("Neighbors of node: %d\t",i);
+        for (int j = 1; j <= neighborMatrix[i][0]; j++) {
+            printf("%d\t",neighborMatrix[i][j]);
+        }
+        printf("\n");
     }
 }

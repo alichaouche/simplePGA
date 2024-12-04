@@ -20,4 +20,8 @@ void edgeListToAdjMatrix();
 void getCohabitationCouples(int maxWeight);
 
 void memoryAllocation(int, ...);
+void createFilesHeader();
+void openFilesForOptimalAndBestSolutions(int numeroGraphe);
+void memoryAllocationForPopulations();
+
 #endif //SIMPLEPGA_COMMUNESFUNCTIONS_H

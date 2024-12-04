@@ -29,7 +29,7 @@
     {
         unsigned int id;
         //int *genotype;
-        char genotype[100000];
+        char genotype[1000000];
         //int *phenotype;
         unsigned int phenotype[10000];
         ///************************************
@@ -47,7 +47,7 @@
 ///=============================================================================================
 
 
-typedef struct
+    typedef struct
     {
         int id;
         float genotype[10000];
@@ -66,14 +66,15 @@ typedef struct
     typedef struct
     {
         int id;
-        int genotype[10000];
-        int phenotype[10000];
-        int mediansVertices[10000];
+        char genotype[1000];
+        int phenotype[1000];
+        int mediansVertices[1000];
         int medians;
-        int nonMediansVertices[10000];
+        int nonMediansVertices[1000];
         int nonMedians;
         int contrainteViole;
-        ul clustersSize[1000];
+        unsigned int nbrCluster;
+        clusterInfo clusters[1000];
         int coutCoupeNormalise;
         int constraintVector[10];
         int coutCoupe;
@@ -136,4 +137,13 @@ typedef struct
         float runTime;
         float ES;
     }metrics;
+
+///############ TYPE NEIGHBORS ################
+typedef struct{
+    int vertex;
+    int nbrNeighbors;
+    int sumWeightsIncidentEdges;
+    int listOfNeighbors[1000];
+    int sortedListOfNeighbors[1000];
+}neighbors;
 #endif //SIMPLEPGA_TYPEDECLARATION_H

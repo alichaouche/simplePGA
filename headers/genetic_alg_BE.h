@@ -28,13 +28,12 @@ void checkCohabitationAndNonCohabitationConstrainteBE(partitionBE *populationBE)
 void getPartitionFromSolutionWithoutRepetitionBE(partitionBE *populationBE);
 
 void writeOptimalSolutionInFileBE(partitionBE *solutionDominante,FILE* optimalSolutionFileBE,
-                                  int nbrRun, metrics metricsBE,
-                                  float moyenneDesPoids,float variancePoids, float standardDeviation);
+                                  int nbrRun, metrics metricsBE);
 int compareCroissantFitnessBE (void const *a, void const *b);
 
 int claculateThresholdsQuartiles(int *threshold, int thresholdQuartiles[3], int nbrThreshold);
 void solutionsReproduction(partitionBE* populationBE);
-void migrationFromDVTCtoBE();
+
 int searchForEdgeIndex(int nd, int na);
 
 

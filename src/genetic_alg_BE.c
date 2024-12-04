@@ -43,6 +43,7 @@ extern edge *edgeVector,*fixedEdgeVector,cohabitationConstraintes[100],nonCohabi
 ///***********************************************
 extern partitionBE *populationBE1,*populationBE2, *solutionDominanteBE,*bestSolutionOverRunsBE;
 extern partitionDVTC *solutionDominanteDVTC;
+extern partitionPMP *solutionDominantePMP;
 ///iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
 /// DECLARATION DES VARIABLES FILES POUR NOS FICHIERS
 ///iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
@@ -66,8 +67,13 @@ void generatePopulationBE(partitionBE* populationBE, int indexFirstIndividual)
     /// IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 
     int allele,nbrZeroArretes, nbrOneArretes;
-
-    nbrZeroArretes = nbrNoeuds / max_sizeCluster;
+#if pGA
+    //nbrZeroArretes = nbrNoeuds / max_sizeCluster;
+    nbrZeroArretes = 0.13 * nbrArretes;
+#else
+    nbrZeroArretes = 0.01 * nbrArretes;
+#endif
+	nbrZeroArretes = nbrNoeuds / max_sizeCluster;
     if(nbrZeroArretes != (double)nbrNoeuds / max_sizeCluster)
         nbrZeroArretes++;
 
@@ -115,7 +121,7 @@ void generatePopulationBE(partitionBE* populationBE, int indexFirstIndividual)
                 allele = rnd(0,nbrArretes);
             }
             while((populationBE+i)->genotype[allele]==0);
-            (populationBE+i)->genotype[allele] = 0;
+                  (populationBE+i)->genotype[allele] = 0;
         }
 
     }
@@ -662,71 +668,13 @@ void calculCoutCoupeEtFitnessWithFlowVectorBE(partitionBE* populationBE)
 ///FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 int  binaryEncoding(int numeroGraphe, metrics *metricsBE)
 {
-
-    int bestSolution,iteration=1, bestSolutionIteration,ES=0;
+    int bestSolution,iteration=1, bestSolutionIteration=1;
     clock_t t1,t2;
-    double temps;
-    float bestFitness;
-    srand(time(NULL));
-
-    if(nbrRun == 1){
-        ///###################  OPTIMAL SOLUTION PER RUN ####################
-        sprintf(cheminOptimalSolutionBE, "../data/results/BE/OptimalSolution/OptimalSolutionThBE%d.csv", numeroGraphe);
-        optimalSolutionFileBE = fopen(cheminOptimalSolutionBE, "w");
-
-        if (optimalSolutionFileBE == NULL) {
-            perror("Impossible d'ouvrir le fichier OptimalSolutionBE en ecriture\n");
-            exit(EXIT_FAILURE);
-        }
-
-        fprintf(optimalSolutionFileBE, "Run N,"
-                                       "intra cut size , inter cut size, Total flows,"
-                                       "Run time,ES,Nbr arêtes,"
-                                       "Nbr vertices ,Average weights,Variances of weights ,SD of weights, Nbr Edgess,Nbr Violated constraintes, Cont T_M_C,Cont Cohab, Cont NON Coha, Partition \n");
-
-    }
-    if(migration == 0) {
-        ///############ ALLOCATION DE LA MEMOIRE POUR LES VARIABLES POPULATION ##########
-        if (populationBE1 == NULL) populationBE1 = (partitionBE *) malloc(taillePopulation * sizeof(partitionBE));
-        if (populationBE1 == NULL) printf("memory allocation failed for the populationBE1 \n");
-
-        if (populationBE2 == NULL) populationBE2 = (partitionBE *) malloc(taillePopulation * sizeof(partitionBE));
-        if (populationBE2 == NULL) printf("memory allocation failed for the populationBE2 \n");
-
-        if (solutionDominanteBE == NULL)solutionDominanteBE = (partitionBE *) malloc(sizeof(partitionBE));
-        if (solutionDominanteBE == NULL) printf("memory allocation failed for the solutionDominanteBE \n");
-
-        if (bestSolutionOverRunsBE == NULL)bestSolutionOverRunsBE = (partitionBE *) malloc(sizeof(partitionBE));
-        if (bestSolutionOverRunsBE == NULL) printf("memory allocation failed for the bestSolutionOverRuns \n");
-
-        ///#### OPEN OUTPUT FILES HERE TO ADD SOME ADDITIONAL INFO ####
-        sprintf(cheminBestSolutionBE, "../data/results/BE/bestSolutions/bestSolutionThBE%d.csv", numeroGraphe);
-        sprintf(cheminFichierDetailsProbleme, "../data/results/DetailsProblem/DetailsProblem%d.csv", numeroGraphe);
-
-        bestSolutionsOverIterationBE = fopen(cheminBestSolutionBE, "w");
-        FichierDetailsProbleme = fopen(cheminFichierDetailsProbleme, "w");
-
-        if (bestSolutionsOverIterationBE == NULL) {
-            perror("Impossible d'ouvrir le fichier bestSolutionBE.csv en ecriture\n");
-            exit(EXIT_FAILURE);
-        }
-
-        if (FichierDetailsProbleme == NULL) {
-            perror("Impossible d'ouvrir le fichier DetailsProblem.csv en ecriture 111\n");
-            exit(EXIT_FAILURE);
-        }
-
-
-        ///###################  BEST SOLUTION PER ITERATION #################
-        fprintf(bestSolutionsOverIterationBE,
-                "Numéro de l'exécution,Numéro de l'itération,ID Solution Dominante,Cout de coupe intra,"
-                "Cout de Coupe inter,Cout de coupe Normalisé,Fitness,Nbr contraintes violées,Nombre de cluster,Genotype,Phenotype \n");
-
-        ///####################################################################
+    ///####################################################################
     /// The best solution of the previous run is kept in the new generation
     ///####################################################################
     t1=clock(); ///START THE CHRONOMETER
-
+if(migration==0){
     generatePopulationBE(populationBE1,0);
     getPartitionFromSolutionBE(populationBE1);
     checkContrainstAndFitnessPenalizationBE(populationBE1);
@@ -737,16 +685,11 @@ int  binaryEncoding(int numeroGraphe, metrics *metricsBE)
     bestSolution=findTheBestSolutionBE(populationBE1);
     *solutionDominanteBE=*(populationBE1+bestSolution);
 
-    bestSolutionIteration = 1;
-
     nbrApparition=1;
     writeBestSolutionInFileBE(solutionDominanteBE,bestSolutionsOverIterationBE,(10*migration + iteration));
-} else{
-        t1=clock(); ///START THE CHRONOMETER
-    }
+}
     ///############## GA  ITERATIONS #########################
-     for(; iteration <= 10; iteration++)
-   /// while(nbrApparition <= 30)
+    for(iteration=1; iteration <= 10; iteration++)
     {
         printf(".");
         naturalSelectionBE(populationBE1,populationBE2);
@@ -769,16 +712,9 @@ int  binaryEncoding(int numeroGraphe, metrics *metricsBE)
             nbrApparition++;
         }
         writeBestSolutionInFileBE(solutionDominanteBE,bestSolutionsOverIterationBE,bestSolutionIteration);
-        //affichePopulationBE(populationBE1);
-
-        ///CHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECK
-        //printf("CN = %d\n", (populationBE1+bestSolution)->coutCoupeNormalise);
-        ///CHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECK
 
         ///REPRODUCTION NEW SOLUTIONS FOR DIVERSIFICATION
         solutionsReproduction(populationBE1);
-
-        //iteration++;
     }
 
     t2=clock();
@@ -795,24 +731,20 @@ int  binaryEncoding(int numeroGraphe, metrics *metricsBE)
         metricsBE->ES += solutionDominanteBE->id +1;
     }
 }
-///************************************************************************************************************
+
+
 void checkContrainstAndFitnessPenalizationBE(partitionBE *populationBE)
 {
-    ///CHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECK
-    //int countNoued = 0;
-    //FILE *clustersSize;
-    //clustersSize = fopen("E:/referencedGraphs/ThBE/clustersSize.txt", "a");
-    ///CHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECK
     int i,j,k;
     int tailleClusters;
-    for(i=0; i<taillePopulation; i++)
+    for(i=0; i < taillePopulation; i++)
     {
         ///iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
         ///initialisation de vecteur des contraintes et de la variable
         ///de contraintes violées
         ///iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
         (populationBE+i)->contrainteViole=0;
-        for(j=0; j<3; j++)
+        for(j=0; j<4; j++)
         {
             (populationBE+i)->constraintVector[j]=0;
         }
@@ -840,17 +772,25 @@ void checkContrainstAndFitnessPenalizationBE(partitionBE *populationBE)
             }
         }
         /*-----------------------------------------------------------------*/
-
+        if((populationBE+i)->nbrCluster > max_clusters || (populationBE+i)->nbrCluster < min_clusters)
+        {
+            (populationBE+i)->constraintVector[0] += 1; /// le nombre de cluster n'est pas valide
+        }
+        if((populationBE+i)->constraintVector[0] != 0)
+        {
+            (populationBE+i)->contrainteViole++;
+        }
 
         for(j=0; j < (populationBE+i)->nbrCluster; j++)
         {
-            if((populationBE+i)->clusters[j].clusterSize  > max_sizeCluster)
+            if((populationBE+i)->clusters[j].clusterSize  > max_sizeCluster ||
+            (populationBE+i)->clusters[j].clusterSize  < min_sizeCluster)
             {
-                (populationBE+i)->constraintVector[0]++;
+                (populationBE+i)->constraintVector[1]++;
 
             }
         }
-        if((populationBE+i)->constraintVector[0] != 0)
+        if((populationBE+i)->constraintVector[1] != 0)
         {
             (populationBE+i)->contrainteViole++;
         }
@@ -865,7 +805,6 @@ void checkContrainstAndFitnessPenalizationBE(partitionBE *populationBE)
 ///FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 void checkCohabitationAndNonCohabitationConstrainteBE(partitionBE *populationBE)
 {
-
     int i,j,noeud1,noeud2;
     for(i=0; i < taillePopulation; i++)
     {
@@ -878,11 +817,11 @@ void checkCohabitationAndNonCohabitationConstrainteBE(partitionBE *populationBE)
 
                 if((populationBE+i)->phenotype[noeud1]!= (populationBE+i)->phenotype[noeud2])
                 {
-                    (populationBE+i)->constraintVector[1]++;
+                    (populationBE+i)->constraintVector[2]++;
                 }
             }
             /// cette instruction permet d'avoir le nombre de contraintes violées
-            if((populationBE+i)->constraintVector[1]!=0)
+            if((populationBE+i)->constraintVector[2]!=0)
             {
                 (populationBE+i)->contrainteViole++;
             }
@@ -897,11 +836,11 @@ void checkCohabitationAndNonCohabitationConstrainteBE(partitionBE *populationBE)
 
                 if((populationBE+i)->phenotype[noeud1]== (populationBE+i)->phenotype[noeud2])
                 {
-                    (populationBE+i)->constraintVector[2]++;
+                    (populationBE+i)->constraintVector[3]++;
                 }
             }
             /// cette instruction permet d'avoir le nombre de contraintes violées
-            if((populationBE+i)->constraintVector[2]!=0)
+            if((populationBE+i)->constraintVector[3]!=0)
             {
                 (populationBE+i)->contrainteViole++;
             }
@@ -913,50 +852,46 @@ void checkCohabitationAndNonCohabitationConstrainteBE(partitionBE *populationBE)
 ///FFFFFFFFFFFFFFFFFFFFFF writeOptimalSolutionInFileBE FFFFFFFFFFFFFFFFFFFFFFFF
 ///FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 void writeOptimalSolutionInFileBE(partitionBE *solutionDominante,FILE* optimalSolutionFileBE,
-                                  int nbrRun, metrics metricsBE,float moyenneDesPoids,
-                                  float variancePoids, float standardDeviation)
+                                  int nbrRun, metrics metricsBE)
 {
+
+
     if(optimalSolutionFileBE == NULL) perror("the file was closed\n");
     int i,j,k;
     fprintf(optimalSolutionFileBE,"%d,",nbrRun);
-    fprintf(optimalSolutionFileBE,"%d,%d,%d,%.3f,%.3f,%d,", solutionDominante->coutCoupe,(sommeTotalFlux - solutionDominante->coutCoupe),sommeTotalFlux ,metricsBE.runTime, metricsBE.ES, fixedNbrArretes);
-    fprintf(optimalSolutionFileBE,"%d,%0.2f,%0.2f,%0.2f,%d,%d,",nbrNoeuds,moyenneDesPoids,variancePoids,standardDeviation,nbrArretes,solutionDominante->contrainteViole);
+    fprintf(optimalSolutionFileBE,"%d,%d,%d,%.3f,%.3f,",
+        solutionDominante->coutCoupe,
+        (sommeTotalFlux - solutionDominante->coutCoupe),
+        sommeTotalFlux ,
+        metricsBE.runTime,
+        metricsBE.ES);
+    fprintf(optimalSolutionFileBE,"%d,%d,%d,",
+        nbrNoeuds,
+        nbrArretes,
+        solutionDominante->contrainteViole);
     ///iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
     ///RAJOUTER LES CONTRAINTES VIOLEES
     ///iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
-    fprintf(optimalSolutionFileBE,"%d,%d,%d,",solutionDominante->constraintVector[0],
-            solutionDominante->constraintVector[1],
-            solutionDominante->constraintVector[2]);
+    fprintf(optimalSolutionFileBE,"%d,%d,%d,%d,",
+        solutionDominante->constraintVector[0],
+        solutionDominante->constraintVector[1],
+        solutionDominante->constraintVector[2],
+        solutionDominante->constraintVector[3]);
 
     ///iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
     ///ECRIRE LA PARTITION CORRESPONDANTE A LA MEILLEUR SOLUTION
     ///iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
-    ///CHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECK
-
-    int countNoued = 0;
-    for(j=0; j<solutionDominante->nbrCluster; j++){
-        countNoued += solutionDominante->clusters[j].clusterSize;
-    }
-    if(countNoued < nbrNoeuds){
-        printf("writing solutions  \n");
-        printf("error : nbrNoued not conform ! %d != %d\n", nbrNoeuds, countNoued);
-        exit(countNoued);
-    }
-
-    ///CHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECKCHECK
     for(j=0; j < solutionDominante->nbrCluster ; j++)
     {
         fprintf(optimalSolutionFileBE,"{");
         for(k=0;k< solutionDominante->clusters[j].clusterSize; k++){
-            fprintf(optimalSolutionFileBE,"%d ",solutionDominante->clusters[j].clusterNoueds[k]);
+            fprintf(optimalSolutionFileBE,"%d ",
+                solutionDominante->clusters[j].clusterNoueds[k]);
         }
-        fprintf(optimalSolutionFileBE,"}\t");
+        if(j <= solutionDominante->nbrCluster - 1) fprintf(optimalSolutionFileBE,"}\t");
     }
     fprintf(optimalSolutionFileBE,"\n");
 }
-
-
-
 
 ///FCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCT
 /// USED BY THE QSORT
@@ -977,7 +912,6 @@ int compareDecroissantFitnessBE (void const *a, void const *b)
     partitionBE const *pb = b;
     return  (pa->coutCoupeNormalise - pb->coutCoupeNormalise);
 }
-
 
 ///FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE
 ///FFFFFFFFFFF solutionsReproduction FFFFFFFFFFFFFFF
@@ -1040,75 +974,6 @@ void solutionsReproduction(partitionBE* populationBE)
     }
 }
 
-
-///FCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCT
-/// Migration from DVTC to BE
-///FCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCT
-///FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE
-///FFFFFFFFFFF solutionsReproduction FFFFFFFFFFFFFFF
-///FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE
-void migrationFromDVTCtoBE(){
-    qsort(populationBE1, taillePopulation, sizeof *populationBE1, compareDecroissantFitnessBE);
-    for(int i = 0; i <nbrNoeuds; i++)
-        (populationBE1+taillePopulation-1)->phenotype[i] = solutionDominanteDVTC->genotype[i];
-
-    (populationBE1+taillePopulation-1)->id = taillePopulation - 1;
-    (populationBE1+taillePopulation-1)->coutCoupe = solutionDominanteBE->coutCoupe;
-    (populationBE1+taillePopulation-1)->coutCoupeNormalise = solutionDominanteBE->coutCoupeNormalise;
-    (populationBE1+taillePopulation-1)->contrainteViole = solutionDominanteBE->contrainteViole;
-    (populationBE1+taillePopulation-1)->nbrCluster = solutionDominanteBE->nbrCluster;
-
-    for(int i = 0; i <(populationBE1+taillePopulation-1)->nbrCluster; i++)
-        (populationBE1+taillePopulation-1)->clusters[i] = solutionDominanteBE->clusters[i];
-
-    for(int i = 0; i < nbr_constraint; i++)
-        (populationBE1+taillePopulation-1)->constraintVector[i] = solutionDominanteBE->constraintVector[i];
-    int sommeTotalCoutCoupe = 0;
-    for(int i = 0; i < taillePopulation; i++)
-        sommeTotalCoutCoupe = sommeTotalCoutCoupe + (populationBE1+i)->coutCoupeNormalise;
-
-    float varianceCoutDeCoupeNormalise = 0, moyenneCoutDeCoupeNormalise, sigma, sommeTotalOfExpectdValues = 0;
-    int c= 2;
-
-    moyenneCoutDeCoupeNormalise = sommeTotalCoutCoupe / taillePopulation;
-    for(int i=0; i<taillePopulation; i++)
-    {
-        varianceCoutDeCoupeNormalise =
-                varianceCoutDeCoupeNormalise + pow(((populationBE1+i)->coutCoupeNormalise - moyenneCoutDeCoupeNormalise),2);
-    }
-    varianceCoutDeCoupeNormalise = varianceCoutDeCoupeNormalise / taillePopulation;
-    sigma = sqrt(varianceCoutDeCoupeNormalise);
-
-    /// calcul de sigma truncation
-    (populationBE1+taillePopulation-1)->expectedValue = (populationBE1+taillePopulation-1)->coutCoupeNormalise +
-                                                        (moyenneCoutDeCoupeNormalise - c*sigma);
-
-    for(int i=0; i< taillePopulation;i++)
-        sommeTotalOfExpectdValues = sommeTotalOfExpectdValues + (populationBE1+i)->expectedValue;
-
-    for(int i=0; i<taillePopulation ; i++)
-        (populationBE1+i)->fitness = (float)((populationBE1+i)->expectedValue)/(float)(sommeTotalOfExpectdValues);
-
-    //Encoding the solution using the binary encoding
-    int edgeIndex;
-    for(int i = 0; i < nbrArretes; i++ ) (populationBE1 + taillePopulation - 1)->genotype[i] = 1;
-    for(int i = 0; i < (populationBE1+taillePopulation-1)->nbrCluster; i++) {
-        for (int j = 0; j < (populationBE1 + taillePopulation - 1)->clusters[i].clusterSize - 1; j++) {
-            for (int k = j + 1; k < (populationBE1 + taillePopulation - 1)->clusters[i].clusterSize; k++) {
-                int nd = (populationBE1 + taillePopulation - 1)->clusters[i].clusterNoueds[j];
-                int na = (populationBE1 + taillePopulation - 1)->clusters[i].clusterNoueds[k];
-                if (fluxMatrix[nd][na] > 0) {
-                    edgeIndex = searchForEdgeIndex(nd, na);
-                }
-
-                if (edgeIndex)
-                    (populationBE1 + taillePopulation - 1)->genotype[edgeIndex] = 0;
-            }
-        }
-    }
-}
-
-
 ///FCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCT
 /// searchForEdgeIndex
 ///FCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCTFCT
@@ -1123,3 +988,7 @@ int searchForEdgeIndex(int nd, int na){
     if(!found)
         perror("This edge does not exist \n");
 }
+
+
+
+

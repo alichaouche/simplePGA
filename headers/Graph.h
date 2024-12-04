@@ -29,5 +29,8 @@ void readFlowMatrixAndNbrNoeudsFromEdgeListFile(FILE *edgeListFile );
 void updateDeletedEdges(int *aretesSupprimees, int fixedNbrArretes, edge *deletedEdges, int *nbrAretesSupprimees );
 int isFlowMatrixSymetric();
 void displayEdgeVector();
+void calculateNeighborsVector();
+void calculateNeighborhoodMatrix();
+void displayNeighborhoodMatrix();
 
 #endif //SIMPLEPGA_GRAPH_H

@@ -27,7 +27,7 @@ int compareCroissantFitnessDVTC (void const *a, void const *b);
 void writeOptimalSolutionInFileDVTC(partitionDVTC *solutionDominante,FILE* outputOptimalSolutionFileDVTC,
                                   int nbrRun, metrics metricsDVTC);
 void solutionsReproductionDVTC(partitionDVTC* populationDVTC);
-void migrationFromBEtoDVTC();
+
 int compareDecroissantFitnessDVTC (void const *a, void const *b);
 
 #endif // VERTEX_TO_CLUSTER_H_INCLUDED
